@@ -56,9 +56,9 @@ pipeline {
                 script {
                     // Update image tags in Kubernetes manifests
                     sh """
-                        sed -i 's|image: exam-converter/frontend:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/frontend:${BUILD_NUMBER}|g' k8s/frontend-deployment.yaml
-                        sed -i 's|image: exam-converter/python-analyzer:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/python-analyzer:${BUILD_NUMBER}|g' k8s/python-deployment.yaml
-                        sed -i 's|image: exam-converter/rust-converter:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/rust-converter:${BUILD_NUMBER}|g' k8s/rust-deployment.yaml
+                        sed -i 's|image: exam-converter/frontend:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/frontend:${BUILD_NUMBER}|g\' k8s/frontend-deployment.yaml
+                        sed -i 's|image: exam-converter/python-analyzer:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/python-analyzer:${BUILD_NUMBER}|g\' k8s/python-deployment.yaml
+                        sed -i 's|image: exam-converter/rust-converter:.*|image: ${DOCKER_REGISTRY}/${DOCKER_REPO}/rust-converter:${BUILD_NUMBER}|g\' k8s/rust-deployment.yaml
                     """
                 }
             }
