@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: exam-converter-ingress
+  namespace: exam-converter
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: exam-converter.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /api/python
+        pathType: Prefix
+        backend:
+          service:
+            name: python-service
+            port:
+              number: 8001
+      - path: /api/rust
+        pathType: Prefix
+        backend:
+          service:
+            name: rust-service
+            port:
+              number: 8002
+  tls:
+  - hosts:
+    - exam-converter.local
+    secretName: exam-converter-tls

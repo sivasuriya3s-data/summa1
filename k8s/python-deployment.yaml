@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-analyzer
+  namespace: exam-converter
+  labels:
+    app: python-analyzer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: python-analyzer
+  template:
+    metadata:
+      labels:
+        app: python-analyzer
+    spec:
+      containers:
+      - name: python-analyzer
+        image: exam-converter/python-analyzer:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: PYTHONPATH
+          value: "/app"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-service
+  namespace: exam-converter
+spec:
+  selector:
+    app: python-analyzer
+  ports:
+  - protocol: TCP
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP

@@ -1,10 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, File, X, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function DragAndDropFile() {
+export default function DragAndDropFile({ onFilesSelected }) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [localFiles, setLocalFiles] = useState([]);
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -53,62 +52,19 @@ export default function DragAndDropFile() {
       id: Math.random().toString(36).substr(2, 9),
       file,
       name: file.name,
+      originalName: file.name,
       size: file.size,
       type: file.type,
       status: "pending", // pending, uploading, success, error
       progress: 0,
     }));
 
-    setFiles((prev) => [...prev, ...fileObjects]);
+    setLocalFiles((prev) => [...prev, ...fileObjects]);
+    onFilesSelected(fileObjects);
   };
 
   const removeFile = (id) => {
-    setFiles((prev) => prev.filter((file) => file.id !== id));
-  };
-
-  const uploadFiles = async () => {
-    setUploading(true);
-
-    // Update all files to uploading status
-    setFiles((prev) =>
-      prev.map((file) =>
-        file.status === "pending" ? { ...file, status: "uploading" } : file
-      )
-    );
-
-    // Simulate upload process for each file
-    for (const fileObj of files.filter((f) => f.status === "uploading")) {
-      try {
-        // Simulate upload progress
-        for (let progress = 0; progress <= 100; progress += 20) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          setFiles((prev) =>
-            prev.map((file) =>
-              file.id === fileObj.id ? { ...file, progress } : file
-            )
-          );
-        }
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        setFiles((prev) =>
-          prev.map((file) =>
-            file.id === fileObj.id
-              ? { ...file, status: "success", progress: 100 }
-              : file
-          )
-        );
-      } catch (error) {
-        setFiles((prev) =>
-          prev.map((file) =>
-            file.id === fileObj.id ? { ...file, status: "error" } : file
-          )
-        );
-      }
-    }
-
-    setUploading(false);
+    setLocalFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
   const formatFileSize = (bytes) => {
@@ -154,7 +110,7 @@ export default function DragAndDropFile() {
           Drop files here or click to browse
         </h3>
         <p className="text-gray-500 mb-4">
-          Support for PDF, Images up to 10MB each
+          Support for PDF, DOC, DOCX, Images up to 10MB each
         </p>
 
         <input
@@ -163,7 +119,7 @@ export default function DragAndDropFile() {
           multiple
           className="hidden"
           onChange={handleFileSelect}
-          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
         />
 
         <button
@@ -175,25 +131,14 @@ export default function DragAndDropFile() {
       </div>
 
       {/* File List */}
-      {files.length > 0 && (
+      {localFiles.length > 0 && (
         <div className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Selected Files ({files.length})
-            </h3>
-            {files.some((f) => f.status === "pending") && (
-              <button
-                onClick={uploadFiles}
-                disabled={uploading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-              >
-                {uploading ? "Uploading..." : "Upload All"}
-              </button>
-            )}
-          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Selected Files ({localFiles.length})
+          </h3>
 
           <div className="space-y-3">
-            {files.map((fileObj) => (
+            {localFiles.map((fileObj) => (
               <div
                 key={fileObj.id}
                 className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
@@ -214,69 +159,28 @@ export default function DragAndDropFile() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {fileObj.status === "success" && (
-                      <CheckCircle className="text-green-500" size={20} />
-                    )}
-                    {fileObj.status === "error" && (
-                      <AlertCircle className="text-red-500" size={20} />
-                    )}
-                    {fileObj.status !== "uploading" && (
-                      <button
-                        onClick={() => removeFile(fileObj.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <X size={20} />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => removeFile(fileObj.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
                   </div>
                 </div>
-
-                {/* Progress Bar */}
-                {fileObj.status === "uploading" && (
-                  <div className="mt-3">
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${fileObj.progress}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {fileObj.progress}% uploaded
-                    </p>
-                  </div>
-                )}
-
-                {/* Status Messages */}
-                {fileObj.status === "success" && (
-                  <p className="text-sm text-green-600 mt-2">
-                    ✅ Upload successful
-                  </p>
-                )}
-                {fileObj.status === "error" && (
-                  <p className="text-sm text-red-600 mt-2">❌ Upload failed</p>
-                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Upload Summary */}
-      {files.length > 0 && (
+      {/* File Summary */}
+      {localFiles.length > 0 && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between text-sm">
-            <span>Total Files: {files.length}</span>
+            <span>Total Files: {localFiles.length}</span>
             <span>
               Total Size:{" "}
-              {formatFileSize(files.reduce((acc, f) => acc + f.size, 0))}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm mt-1">
-            <span className="text-green-600">
-              Uploaded: {files.filter((f) => f.status === "success").length}
-            </span>
-            <span className="text-red-600">
-              Failed: {files.filter((f) => f.status === "error").length}
+              {formatFileSize(localFiles.reduce((acc, f) => acc + f.size, 0))}
             </span>
           </div>
         </div>

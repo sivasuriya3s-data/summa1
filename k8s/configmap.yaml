@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exam-converter-config
+  namespace: exam-converter
+data:
+  # Frontend configuration
+  VITE_PYTHON_SERVICE_URL: "http://python-service:8001"
+  VITE_RUST_SERVICE_URL: "http://rust-service:8002"
+  
+  # Python service configuration
+  FLASK_ENV: "production"
+  PYTHONPATH: "/app"
+  
+  # Rust service configuration
+  RUST_LOG: "info"
+  
+  # Common configuration
+  MAX_FILE_SIZE: "10485760"  # 10MB
+  ALLOWED_EXTENSIONS: "pdf,doc,docx,jpg,jpeg,png"
